@@ -10,20 +10,38 @@ function useGame() {
   const [error, setError] = useState("");
   const [connected, setConnected] = useState(false);
   const ws = useRef(null);
+  const retryTimer = useRef(null);
+  const connectionToken = useRef(0);
   const join = (name, roomId) => {
+    const token = connectionToken.current + 1;
+    connectionToken.current = token;
+    clearTimeout(retryTimer.current);
     ws.current?.close();
-    const socket = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws?room=${encodeURIComponent(roomId)}`);
-    ws.current = socket;
     const storageKey = `bomb-pass:${roomId}`;
-    socket.onopen = () => socket.send(JSON.stringify({ type: "join", name, roomId, playerId: localStorage.getItem(storageKey) }));
-    socket.onmessage = ({ data }) => {
-      const msg = JSON.parse(data);
-      if (msg.type === "joined") { setPlayerId(msg.playerId); localStorage.setItem(storageKey, msg.playerId); setConnected(true); }
-      if (msg.type === "state") setRoom(msg.room);
-      if (msg.type === "error") setError(msg.message);
+    const connect = () => {
+      if (connectionToken.current !== token) return;
+      const socket = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws?room=${encodeURIComponent(roomId)}`);
+      ws.current = socket;
+      socket.onopen = () => socket.send(JSON.stringify({ type: "join", name, roomId, playerId: localStorage.getItem(storageKey) }));
+      socket.onmessage = ({ data }) => {
+        const msg = JSON.parse(data);
+        if (msg.type === "joined") { setPlayerId(msg.playerId); localStorage.setItem(storageKey, msg.playerId); setConnected(true); setError(""); }
+        if (msg.type === "state") setRoom(msg.room);
+        if (msg.type === "error") setError(msg.message);
+      };
+      socket.onclose = () => {
+        if (connectionToken.current !== token) return;
+        setConnected(false);
+        retryTimer.current = setTimeout(connect, 1200);
+      };
     };
-    socket.onclose = () => setConnected(false);
+    connect();
   };
+  useEffect(() => () => {
+    connectionToken.current += 1;
+    clearTimeout(retryTimer.current);
+    ws.current?.close();
+  }, []);
   const send = (type, extra = {}) => ws.current?.readyState === 1 && ws.current.send(JSON.stringify({ type, ...extra }));
   return { room, playerId, error, connected, join, send };
 }
