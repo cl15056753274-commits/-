@@ -8,4 +8,4 @@ reference.png
 design-qa.md
 .env
 .env.*
-
+.deploy/
