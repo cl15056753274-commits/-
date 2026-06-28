@@ -12,7 +12,7 @@ function useGame() {
   const ws = useRef(null);
   const join = (name, roomId) => {
     ws.current?.close();
-    const socket = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`);
+    const socket = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws?room=${encodeURIComponent(roomId)}`);
     ws.current = socket;
     const storageKey = `bomb-pass:${roomId}`;
     socket.onopen = () => socket.send(JSON.stringify({ type: "join", name, roomId, playerId: localStorage.getItem(storageKey) }));

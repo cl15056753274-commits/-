@@ -3,6 +3,7 @@ import WebSocket from "ws";
 const roomId = `QA${Date.now().toString().slice(-4)}`;
 const clients = [];
 const states = new Map();
+const serverUrl = (process.env.WS_URL || "ws://127.0.0.1:4173").replace(/\/$/, "");
 
 const waitFor = (check, timeout = 4000) => new Promise((resolve, reject) => {
   const started = Date.now();
@@ -16,7 +17,7 @@ const waitFor = (check, timeout = 4000) => new Promise((resolve, reject) => {
 });
 
 for (let i = 0; i < 5; i += 1) {
-  const ws = new WebSocket("ws://127.0.0.1:4173");
+  const ws = new WebSocket(`${serverUrl}/ws?room=${roomId}`);
   clients.push(ws);
   ws.on("message", (raw) => {
     const msg = JSON.parse(raw.toString());
