@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: bomb-pass-party
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build
+    startCommand: pnpm start
+    healthCheckPath: /
+    autoDeployTrigger: commit
+

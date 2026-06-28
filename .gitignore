@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.npm-cache/
+*.log
+implementation-*.png
+qa-comparison*.png
+reference.png
+design-qa.md
+.env
+.env.*
+
